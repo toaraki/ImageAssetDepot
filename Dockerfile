@@ -4,6 +4,11 @@ FROM registry.access.redhat.com/ubi8/nodejs-20
 # コンテナ内の作業ディレクトリを設定
 WORKDIR /usr/src/app
 
+# ICUライブラリをインストール
+USER root
+RUN yum -y update && yum -y install libicu
+USER 1001
+
 # package.json と package-lock.json をコピーして依存関係をインストール
 # これにより、アプリケーションコードの変更があっても依存関係のレイヤーはキャッシュされる
 COPY package*.json ./
