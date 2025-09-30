@@ -55,7 +55,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(express.json());
-app.use(express.static(UPLOAD_DIR)); // 画像配信用の静的ファイルサーバー
+//app.use(express.static(UPLOAD_DIR)); // 画像配信用の静的ファイルサーバー
+app.use('/public',express.static(UPLOAD_DIR)); // 画像配信用の静的ファイルサーバー
 
 // --- 画像管理用API ---
 
@@ -93,7 +94,7 @@ app.get('/api/images', (req, res) => {
     // クライアント側で利用しやすいようにURLを付加
     const imagesWithUrls = rows.map(row => ({
       ...row,
-      url: `/data/public/${row.filename}`
+      url: `/public/${row.filename}`
     }));
     res.json(imagesWithUrls);
   });
@@ -173,7 +174,7 @@ app.post('/admin/update-weight', (req, res) => {
 // --- アプリケーション向けエンドポイント ---
 
 // ランダムな画像配信API（重み付け考慮）
-app.get('/data/public/medal_random.png', (req, res) => {
+app.get('/public/medal_random.png', (req, res) => {
   db.all('SELECT filename, weight FROM images', [], (err, rows) => {
     if (err || !rows || rows.length === 0) {
       return res.status(404).send('No images found.');
