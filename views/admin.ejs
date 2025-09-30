@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>画像管理画面</title>
+    <style>
+        body { font-family: sans-serif; margin: 2em; }
+        .image-card { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; }
+        img { max-width: 100px; height: auto; }
+        input[type="number"] { width: 50px; }
+    </style>
+</head>
+<body>
+    <h1>画像管理画面</h1>
+
+    <h2>画像アップロード</h2>
+    <form action="/api/upload" method="post" enctype="multipart/form-data">
+        <label for="image">画像ファイル:</label>
+        <input type="file" name="image" id="image" required>
+        <label for="weight">重み付け (レア度):</label>
+        <input type="number" name="weight" id="weight" value="1" min="1" required>
+        <button type="submit">アップロード</button>
+    </form>
+
+    <hr>
+
+    <h2>登録済み画像一覧</h2>
+    <div id="image-list">
+        <% images.forEach(image => { %>
+            <div class="image-card">
+                <h3>ファイル名: <%= image.original_name %></h3>
+                <p>内部名: <%= image.filename %></p>
+                <img src="/public/<%= image.filename %>" alt="<%= image.original_name %>">
+                <p>
+                    <label>重み付け:
+                        <input type="number" value="<%= image.weight %>" min="1" onchange="updateWeight('<%= image.id %>', this.value)">
+                    </label>
+                </p>
+                <button onclick="deleteImage('<%= image.id %>')">削除</button>
+            </div>
+        <% }); %>
+    </div>
+
+    <script>
+        // 画像を削除する関数
+        async function deleteImage(id) {
+            if (!confirm('本当にこの画像を削除しますか？')) {
+                return;
+            }
+            const response = await fetch(`/api/images/${id}`, {
+                method: 'DELETE'
+            });
+            if (response.ok) {
+                alert('画像を削除しました。');
+                window.location.reload();
+            } else {
+                alert('削除に失敗しました。');
+            }
+        }
+
+        // 重み付けを更新する関数
+        async function updateWeight(id, weight) {
+            const response = await fetch(`/admin/update-weight`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, weight: parseInt(weight) })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    console.log('重み付けを更新しました。');
+                } else {
+                    alert('重み付けの更新に失敗しました。');
+                }
+            } else {
+                alert('重み付けの更新に失敗しました。');
+            }
+        }
+    </script>
+</body>
+</html>
