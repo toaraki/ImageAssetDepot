@@ -1,0 +1,24 @@
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: image-asset-depot-build
+spec:
+  source:
+    git:
+      uri: 'https://github.com/toaraki/ImageAssetDepot.git'
+    type: Git
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: 'nodejs:20-ubi8'
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'image-asset-depot:latest'
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: image-asset-depot
