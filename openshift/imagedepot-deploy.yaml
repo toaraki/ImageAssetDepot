@@ -1,0 +1,93 @@
+# BuildConfig
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: image-asset-depot-build
+spec:
+  source:
+    git:
+      uri: 'https://github.com/toaraki/ImageAssetDepot.git'
+    type: Git
+  strategy:
+    type: Source
+    sourceStrategy:
+      from:
+        kind: ImageStreamTag
+        name: 'nodejs:20-ubi8'
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'image-asset-depot:latest'
+---
+# ImageStream (ビルドされたイメージを管理)
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: image-asset-depot
+---
+# PersistentVolumeClaim
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: image-asset-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-asset-depot
+  labels:
+    app: image-asset-depot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: image-asset-depot
+  template:
+    metadata:
+      labels:
+        app: image-asset-depot
+    spec:
+      containers:
+        - name: image-asset-depot
+          image: image-asset-depot:latest
+          ports:
+            - containerPort: 3000
+          volumeMounts:
+            - name: image-asset-data
+              mountPath: /data
+      volumes:
+        - name: image-asset-data
+          persistentVolumeClaim:
+            claimName: image-asset-data
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: image-asset-depot
+spec:
+  selector:
+    app: image-asset-depot
+  ports:
+    - protocol: TCP
+      port: 3000
+      targetPort: 3000
+---
+# Route
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: image-asset-depot
+spec:
+  to:
+    kind: Service
+    name: image-asset-depot
+  port:
+    targetPort: 3000
